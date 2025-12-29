@@ -1,6 +1,7 @@
 package com.sfane.sfaneapi.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,8 +30,9 @@ public class Product {
     @Column(nullable = false, unique = true)
     private String slug;
 
-    @Lob
+    @Column(length = 5000)
     private String description;
+
 
     @Column(nullable = false)
     private BigDecimal price;
@@ -50,8 +52,13 @@ public class Product {
 
 
     @ManyToMany
-    @JoinColumn(name = "category_id")
-    private Category category;
+    @JoinTable(
+            name = "product_categories",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    @JsonIgnoreProperties("products")
+    private List<Category> categories = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

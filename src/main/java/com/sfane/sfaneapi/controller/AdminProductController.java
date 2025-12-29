@@ -1,6 +1,7 @@
 package com.sfane.sfaneapi.controller;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sfane.sfaneapi.model.Product;
 import com.sfane.sfaneapi.model.ProductImage;
 import com.sfane.sfaneapi.repository.ProductRepository;
@@ -30,11 +31,16 @@ public class AdminProductController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Product createProduct(
-            @RequestPart("product") Product product,
+            @RequestPart("product") String productJson,
             @RequestPart("images") List<MultipartFile> images
     ) throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+        Product product = mapper.readValue(productJson, Product.class);
+
         Product saved = productRepo.save(product);
-        for (MultipartFile img : images){
+
+        for (MultipartFile img : images) {
             Map res = cloudinaryService.upload(img);
 
             ProductImage pi = ProductImage.builder()
@@ -42,8 +48,11 @@ public class AdminProductController {
                     .publicId(res.get("public_id").toString())
                     .product(saved)
                     .build();
+
             saved.getImages().add(pi);
         }
+
         return productRepo.save(saved);
     }
+
 }
