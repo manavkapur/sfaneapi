@@ -38,21 +38,23 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .cors(cors -> {}) // configure CORS globally if needed
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/test/**", "/h2-console/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/phone-login").permitAll()
+                        .requestMatchers("/cart/**", "/orders/**").hasRole("USER")
                         .anyRequest().permitAll()
-                );
+                )
 
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
-        // For H2 console during dev (if using), disable frame options
-        http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 }

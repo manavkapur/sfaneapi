@@ -2,6 +2,7 @@ package com.sfane.sfaneapi.security;
 
 import com.sfane.sfaneapi.service.AdminUserService;
 import com.sfane.sfaneapi.service.BlacklistedTokenService;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +15,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
+import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -44,13 +46,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (jwtUtil.validateToken(jwt)) {
                     String username = jwtUtil.getUsernameFromToken(jwt);
-                    UserDetails userDetails = userService.loadUserByUsername(username);
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    if(username.startsWith("USER_")){
+                        Long userId = Long.parseLong(username.replace("USER_", ""));
 
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(userId, null, List.of(new SimpleGrantedAuthority("ROLE_USER")) );
+
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    } else {
+                        UserDetails userDetails = userService.loadUserByUsername(username);
+
+
+
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+
+
+
                 }
             }
         } catch (Exception ex) {
