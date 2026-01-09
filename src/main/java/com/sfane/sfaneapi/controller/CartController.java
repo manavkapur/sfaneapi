@@ -1,5 +1,7 @@
 package com.sfane.sfaneapi.controller;
 
+import com.sfane.sfaneapi.dto.CartResponse;
+import com.sfane.sfaneapi.service.CartPricingService;
 import org.springframework.security.core.Authentication;
 import com.sfane.sfaneapi.dto.AddToCartRequest;
 import com.sfane.sfaneapi.dto.UpdateCartRequest;
@@ -16,34 +18,37 @@ import org.springframework.web.bind.annotation.*;
 public class CartController {
 
     private final CartService cartService;
+    private final CartPricingService pricingService;
 
     @GetMapping
-    public Cart view(Authentication auth){
+    public CartResponse view(Authentication auth){
         Long userId = (Long) auth.getPrincipal();
-        return cartService.getOrCreateCart(userId);
+        Cart cart = cartService.getOrCreateCart(userId);
+        return pricingService.price(cart);
     }
 
     @PostMapping("/add")
-    public Cart add(
-            Authentication auth,
-            @RequestBody AddToCartRequest req){
-
+    public CartResponse add(Authentication auth,
+                            @RequestBody AddToCartRequest req){
         Long userId = (Long) auth.getPrincipal();
-        return cartService.addItem(userId, req.getProductId(), req.getQty());
+        Cart cart = cartService.addItem(userId, req.getProductId(), req.getQty());
+        return pricingService.price(cart);
     }
 
     @PutMapping("/update")
-    public Cart update(
-            Authentication auth,
-            @RequestBody UpdateCartRequest req){
-
+    public CartResponse update(Authentication auth,
+                               @RequestBody UpdateCartRequest req){
         Long userId = (Long) auth.getPrincipal();
-        return cartService.updateQty(userId, req.getItemId(), req.getQty());
+        Cart cart = cartService.updateQty(userId, req.getItemId(), req.getQty());
+        return pricingService.price(cart);
     }
+
 
     @DeleteMapping("/clear")
-    public Cart clear(Authentication auth){
+    public CartResponse clear(Authentication auth){
         Long userId = (Long) auth.getPrincipal();
-        return cartService.clear(userId);
+        Cart cart = cartService.clear(userId);
+        return pricingService.price(cart);
     }
+
 }
